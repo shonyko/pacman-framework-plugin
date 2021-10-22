@@ -577,7 +577,7 @@ def readCommand( argv ):
     args['timeout'] = options.timeout
 
     ghostPluginArgs = parseAgentArgs(options.ghostPluginArgs)
-    args['ghostPacmanConfig'] = GhostPacmanConfig(**ghostPluginArgs)
+    args['ghostPacmanConfig'] = GhostPacmanConfig(ghostPluginArgs)
 
     # Special case: recorded games don't use the runGames method or args structure
     if options.gameToReplay != None:

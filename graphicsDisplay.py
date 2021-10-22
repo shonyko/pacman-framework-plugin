@@ -264,6 +264,27 @@ class PacmanGraphics:
                        BACKGROUND_COLOR,
                        "CS188 Pacman")
 
+    def addGhostPacmanObject( self, agentState, colors ):
+        image = self.drawGhostPacman(agentState, colors)
+        self.agentImages.append((agentState, image))
+
+    def removeGhostPacmanObject( self, agentIndex ):
+        self.agentImages.pop(agentIndex)
+
+    def drawGhostPacman( self, agentState, colors ):
+        position = self.getPosition(agentState)
+        screen_point = self.to_screen(position)
+        endpoints = self.getEndpoints(self.getDirection(agentState))
+
+        width = PACMAN_OUTLINE_WIDTH
+        outlineColor = colors[0]
+        fillColor = colors[1]
+
+        return [circle(screen_point, PACMAN_SCALE * self.gridSize,
+                       fillColor = fillColor, outlineColor = outlineColor,
+                       endpoints = endpoints,
+                       width = width)]
+
     def drawPacman(self, pacman, index):
         position = self.getPosition(pacman)
         screen_point = self.to_screen(position)

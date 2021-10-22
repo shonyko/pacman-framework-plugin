@@ -25,6 +25,8 @@ import time, os
 import traceback
 import sys
 
+from ghostPacmanPlugin import GhostPacmanConfig
+
 #######################
 # Parts worth reading #
 #######################
@@ -150,6 +152,8 @@ class AgentState:
         state.scaredTimer = self.scaredTimer
         state.numCarrying = self.numCarrying
         state.numReturned = self.numReturned
+        # Pentru ghostPacmanPlugin
+        state._ghostPacmanId = self._ghostPacmanId
         return state
 
     def getPosition(self):
@@ -571,6 +575,9 @@ class Game:
         self.display.initialize(self.state.data)
         self.numMoves = 0
 
+        ghostPacmanPlugin = GhostPacmanConfig()
+        ghostPacmanPlugin.initialize(self)
+
         ###self.display.initialize(self.state.makeObservation(1).data)
         # inform learning agents of the game start
         for i in range(len(self.agents)):
@@ -698,6 +705,10 @@ class Game:
                     return
             else:
                 self.state = self.state.generateSuccessor( agentIndex, action )
+
+            pluginResult = ghostPacmanPlugin.move(agentIndex)
+            numAgents += pluginResult
+            agentIndex += pluginResult
 
             # Change the display
             self.display.update( self.state.data )

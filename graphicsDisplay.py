@@ -271,6 +271,12 @@ class PacmanGraphics:
     def removeGhostPacmanObject( self, agentIndex ):
         self.agentImages.pop(agentIndex)
 
+    def undrawGhostPacman( self, agentIndex, colors ):
+        agentState = self.agentImages[agentIndex][0]
+        image = self.drawGhostPacman(agentState, colors)
+        self.agentImages[agentIndex] = (agentState, image)
+        refresh()
+
     def drawGhostPacman( self, agentState, colors ):
         position = self.getPosition(agentState)
         screen_point = self.to_screen(position)

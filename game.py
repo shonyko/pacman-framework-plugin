@@ -25,8 +25,6 @@ import time, os
 import traceback
 import sys
 
-from ghostPacmanPlugin import GhostPacmanConfig
-
 #######################
 # Parts worth reading #
 #######################
@@ -153,7 +151,7 @@ class AgentState:
         state.numCarrying = self.numCarrying
         state.numReturned = self.numReturned
         # Pentru ghostPacmanPlugin
-        state._ghostPacmanId = self._ghostPacmanId
+        if hasattr(self, "_ghostPacmanId"): state._ghostPacmanId = self._ghostPacmanId
         return state
 
     def getPosition(self):
@@ -575,6 +573,7 @@ class Game:
         self.display.initialize(self.state.data)
         self.numMoves = 0
 
+        from ghostPacmanPlugin import GhostPacmanConfig
         ghostPacmanPlugin = GhostPacmanConfig()
         ghostPacmanPlugin.initialize(self)
 
@@ -706,14 +705,16 @@ class Game:
             else:
                 self.state = self.state.generateSuccessor( agentIndex, action )
 
-            pluginResult = ghostPacmanPlugin.move(agentIndex)
-            numAgents += pluginResult
-            agentIndex += pluginResult
+
 
             # Change the display
             self.display.update( self.state.data )
             ###idx = agentIndex - agentIndex % 2 + 1
             ###self.display.update( self.state.makeObservation(idx).data )
+
+            pluginResult = ghostPacmanPlugin.move(agentIndex)
+            numAgents += pluginResult
+            agentIndex += pluginResult
 
             # Allow for game specific conditions (winning, losing, etc.)
             self.rules.process(self.state, self)

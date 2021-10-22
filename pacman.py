@@ -88,8 +88,8 @@ class GameState:
 #        GameState.explored.add(self)
         if self.isWin() or self.isLose(): return []
 
-        if agentIndex == 0:  # Pacman is moving
-            return PacmanRules.getLegalActions( self )
+        if agentIndex == 0 or agentIndex > self.getNumGhostAgents():  # Pacman is moving
+            return PacmanRules.getLegalActions( self, agentIndex )
         else:
             return GhostRules.getLegalActions( self, agentIndex )
 
@@ -104,9 +104,9 @@ class GameState:
         state = GameState(self)
 
         # Let agent's logic deal with its action's effects on the board
-        if agentIndex == 0:  # Pacman is moving
+        if agentIndex == 0 or agentIndex > self.getNumGhostAgents():  # Pacman is moving
             state.data._eaten = [False for i in range(state.getNumAgents())]
-            PacmanRules.applyAction( state, action )
+            PacmanRules.applyAction( state, action, agentIndex )
         else:                # A ghost is moving
             GhostRules.applyAction( state, action, agentIndex )
 
@@ -126,26 +126,26 @@ class GameState:
         GameState.explored.add(state)
         return state
 
-    def getLegalPacmanActions( self ):
-        return self.getLegalActions( 0 )
+    def getLegalPacmanActions( self, agentIndex = 0 ):
+        return self.getLegalActions( agentIndex )
 
-    def generatePacmanSuccessor( self, action ):
+    def generatePacmanSuccessor( self, action, agentIndex = 0 ):
         """
         Generates the successor state after the specified pacman move
         """
-        return self.generateSuccessor( 0, action )
+        return self.generateSuccessor( agentIndex, action )
 
-    def getPacmanState( self ):
+    def getPacmanState( self, agentIndex = 0 ):
         """
         Returns an AgentState object for pacman (in game.py)
 
         state.pos gives the current position
         state.direction gives the travel vector
         """
-        return self.data.agentStates[0].copy()
+        return self.data.agentStates[agentIndex].copy()
 
-    def getPacmanPosition( self ):
-        return self.data.agentStates[0].getPosition()
+    def getPacmanPosition( self, agentIndex = 0 ):
+        return self.data.agentStates[agentIndex].getPosition()
 
     def getGhostStates( self ):
         return self.data.agentStates[1:]
@@ -162,6 +162,9 @@ class GameState:
 
     def getGhostPositions(self):
         return [s.getPosition() for s in self.getGhostStates()]
+
+    def getNumGhostAgents( self ):
+        return len( list(filter(lambda x: x.isPacman == False, self.data.agentStates)) )
 
     def getNumAgents( self ):
         return len( self.data.agentStates )
@@ -329,22 +332,22 @@ class PacmanRules:
     """
     PACMAN_SPEED=1
 
-    def getLegalActions( state ):
+    def getLegalActions( state, agentIndex = 0 ):
         """
         Returns a list of possible actions.
         """
-        return Actions.getPossibleActions( state.getPacmanState().configuration, state.data.layout.walls )
+        return Actions.getPossibleActions( state.data.agentStates[agentIndex].configuration, state.data.layout.walls )
     getLegalActions = staticmethod( getLegalActions )
 
-    def applyAction( state, action ):
+    def applyAction( state, action, agentIndex = 0 ):
         """
         Edits the state to reflect the results of the action.
         """
-        legal = PacmanRules.getLegalActions( state )
+        legal = PacmanRules.getLegalActions( state, agentIndex )
         if action not in legal:
             raise Exception("Illegal action " + str(action))
 
-        pacmanState = state.data.agentStates[0]
+        pacmanState = state.data.agentStates[agentIndex]
 
         # Update Configuration
         vector = Actions.directionToVector( action, PacmanRules.PACMAN_SPEED )
@@ -421,6 +424,7 @@ class GhostRules:
     decrementTimer = staticmethod( decrementTimer )
 
     def checkDeath( state, agentIndex):
+        return
         pacmanPosition = state.getPacmanPosition()
         if agentIndex == 0: # Pacman just moved; Anyone can kill him
             for index in range( 1, len( state.data.agentStates ) ):
@@ -526,7 +530,7 @@ def readCommand( argv ):
     parser.add_option('--timeout', dest='timeout', type='int',
                       help=default('Maximum length of time an agent can spend computing in a single game'), default=30)
 
-    parser.add_option('-z','--ghostPluginArgs',dest='ghostPluginArgs',
+    parser.add_option('-w','--ghostPluginArgs',dest='ghostPluginArgs',
                       help='Comma separated values sent to the ghost pacman plugin. e.g. "opt1=val1,opt2,opt3=val3"')
 
     options, otherjunk = parser.parse_args(argv)
@@ -577,7 +581,10 @@ def readCommand( argv ):
     args['timeout'] = options.timeout
 
     ghostPluginArgs = parseAgentArgs(options.ghostPluginArgs)
-    args['ghostPacmanConfig'] = GhostPacmanConfig(ghostPluginArgs)
+    if 'ghostPacmanAgent' in ghostPluginArgs:
+        ghostPluginArgs['ghostPacmanAgent'] = loadAgent(ghostPluginArgs['ghostPacmanAgent'], True)
+    print(ghostPluginArgs)
+    tmp = GhostPacmanConfig(ghostPluginArgs)
 
     # Special case: recorded games don't use the runGames method or args structure
     if options.gameToReplay != None:

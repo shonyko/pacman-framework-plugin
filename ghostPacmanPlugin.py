@@ -2,6 +2,7 @@ from random import randrange
 from random import uniform
 from Game import Agent
 from graphicsUtils import *
+from pacman import GhostRules
 
 class GhostPacmanAgent(Agent):
     "A pacman ghost filled with the rage of defeat."
@@ -29,6 +30,14 @@ DEAD_PACMAN_COLORS = [
     formatColor(0.0, 0.0, 0.0)
 ]
 
+def isTrue(value):
+    if type(value) == bool:
+        return value == True
+    if type(value) == str:
+        return str(value) == "True"
+    if type(value) == int:
+        return str(value) > 0
+
 # Singleton
 def GhostPacmanConfig( args = None ):
     if _GhostPacmanConfig._instance is None:
@@ -41,20 +50,21 @@ def GhostPacmanConfig( args = None ):
 class _GhostPacmanConfig():
     _instance = None
 
-    def __init__( self, enabled = True,  numFoods = 3, probability = 1, maxSteps = 15, killGhosts = False, ghostPacmanAgent = GhostPacmanAgent, ghostPacmanColors = GHOST_PACMAN_COLORS, deadPacmanColors = DEAD_PACMAN_COLORS ):
-        self.enabled = enabled
+    def __init__( self, enabled = False,  numFoods = 3, startingFoods = 0, probability = 1, maxSteps = 15, killGhosts = False, ghostPacmanAgent = GhostPacmanAgent, ghostPacmanColors = GHOST_PACMAN_COLORS, deadPacmanColors = DEAD_PACMAN_COLORS ):
+        self.enabled = isTrue(enabled)
         self.numFoods = int(numFoods)
+        self.startingFoods = int(startingFoods)
         self.probability = float(probability)
         self.maxSteps = int(maxSteps)
-        self.killGhosts = killGhosts
+        self.killGhosts = isTrue(killGhosts)
         self.ghostPacmanAgent = ghostPacmanAgent
         self.ghostPacmanColors = ghostPacmanColors
         self.deadPacmanColors = deadPacmanColors
 
         self._isInitialized = False
 
-    def initialize( self, game, startingFoods = 0 ):
-        self._eatenFoods = startingFoods
+    def initialize( self, game ):
+        self._eatenFoods = self.startingFoods
         self._ghostPacmanAgents = {}
         self._ghostPacmanId = 0
 
@@ -72,14 +82,24 @@ class _GhostPacmanConfig():
         if agentIndex == 0:
             return self.eat(agentIndex)
 
+        numGhostAgents = self._game.state.getNumGhostAgents()
         # Nu ne intereseaza fantomele
-        if agentIndex <= self._game.state.getNumGhostAgents():
+        if agentIndex <= numGhostAgents:
             return 0
         
         # Daca e o fantoma pacman ii actualizam timpul de stat in viata
+        #   si verificam daca poate manca alte fantome
         despawned = False
 
         agentState = self._game.state.data.agentStates[agentIndex]
+
+        if self.killGhosts:
+            for index in range(1, numGhostAgents + 1):
+                ghostState = self._game.state.getGhostState(index)
+                if GhostRules.canKill(agentState.getPosition(), ghostState.getPosition()):
+                    self._game.state.data.scoreChange += 50
+                    GhostRules.placeGhost(self._game.state, ghostState)
+
         self._ghostPacmanAgents[agentState._ghostPacmanId] = self._ghostPacmanAgents[agentState._ghostPacmanId] - 1 
 
         if self._ghostPacmanAgents[agentState._ghostPacmanId] <= 0:
@@ -103,7 +123,6 @@ class _GhostPacmanConfig():
         return spawned
 
     def spawnGhostPacman( self ):
-        print("Nasteee")
         agentState = self._game.state.data.agentStates[0].copy()
         agent = self.ghostPacmanAgent( len(self._game.agents) )
 
@@ -117,7 +136,6 @@ class _GhostPacmanConfig():
         self._ghostPacmanId += 1
 
     def despawnGhostPacman( self, agentIndex ):
-        print("Moareee")
         agentState = self._game.state.data.agentStates[agentIndex]
 
         for index in range(agentIndex + 1, self._game.state.getNumAgents()):

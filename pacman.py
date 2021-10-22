@@ -48,8 +48,6 @@ from util import manhattanDistance
 import util, layout
 import sys, types, time, random, os
 
-from ghostPacmanPlugin import GhostPacmanConfig
-
 ###################################################
 # YOUR INTERFACE TO THE PACMAN WORLD: A GameState #
 ###################################################
@@ -148,15 +146,15 @@ class GameState:
         return self.data.agentStates[agentIndex].getPosition()
 
     def getGhostStates( self ):
-        return self.data.agentStates[1:]
+        return self.data.agentStates[1:self.getNumGhostAgents()]
 
     def getGhostState( self, agentIndex ):
-        if agentIndex == 0 or agentIndex >= self.getNumAgents():
+        if agentIndex == 0 or agentIndex > self.getNumAgents():
             raise Exception("Invalid index passed to getGhostState")
         return self.data.agentStates[agentIndex]
 
     def getGhostPosition( self, agentIndex ):
-        if agentIndex == 0:
+        if agentIndex == 0 or agentIndex > self.getNumAgents():
             raise Exception("Pacman's index passed to getGhostPosition")
         return self.data.agentStates[agentIndex].getPosition()
 
@@ -424,14 +422,15 @@ class GhostRules:
     decrementTimer = staticmethod( decrementTimer )
 
     def checkDeath( state, agentIndex):
-        return
         pacmanPosition = state.getPacmanPosition()
         if agentIndex == 0: # Pacman just moved; Anyone can kill him
-            for index in range( 1, len( state.data.agentStates ) ):
-                ghostState = state.data.agentStates[index]
+            for index in range( 1, state.getNumGhostAgents() ):
+                ghostState = state.getGhostState(index)
                 ghostPosition = ghostState.configuration.getPosition()
                 if GhostRules.canKill( pacmanPosition, ghostPosition ):
                     GhostRules.collide( state, ghostState, index )
+        elif state.data.agentStates[agentIndex].isPacman:
+            return
         else:
             ghostState = state.data.agentStates[agentIndex]
             ghostPosition = ghostState.configuration.getPosition()
@@ -580,10 +579,11 @@ def readCommand( argv ):
     args['catchExceptions'] = options.catchExceptions
     args['timeout'] = options.timeout
 
+
+    from ghostPacmanPlugin import GhostPacmanConfig
     ghostPluginArgs = parseAgentArgs(options.ghostPluginArgs)
     if 'ghostPacmanAgent' in ghostPluginArgs:
         ghostPluginArgs['ghostPacmanAgent'] = loadAgent(ghostPluginArgs['ghostPacmanAgent'], True)
-    print(ghostPluginArgs)
     tmp = GhostPacmanConfig(ghostPluginArgs)
 
     # Special case: recorded games don't use the runGames method or args structure

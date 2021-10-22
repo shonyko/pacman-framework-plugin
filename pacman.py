@@ -48,6 +48,8 @@ from util import manhattanDistance
 import util, layout
 import sys, types, time, random, os
 
+from ghostPacmanPlugin import GhostPacmanConfig
+
 ###################################################
 # YOUR INTERFACE TO THE PACMAN WORLD: A GameState #
 ###################################################
@@ -524,6 +526,9 @@ def readCommand( argv ):
     parser.add_option('--timeout', dest='timeout', type='int',
                       help=default('Maximum length of time an agent can spend computing in a single game'), default=30)
 
+    parser.add_option('-z','--ghostPluginArgs',dest='ghostPluginArgs',
+                      help='Comma separated values sent to the ghost pacman plugin. e.g. "opt1=val1,opt2,opt3=val3"')
+
     options, otherjunk = parser.parse_args(argv)
     if len(otherjunk) != 0:
         raise Exception('Command line input not understood: ' + str(otherjunk))
@@ -570,6 +575,9 @@ def readCommand( argv ):
     args['record'] = options.record
     args['catchExceptions'] = options.catchExceptions
     args['timeout'] = options.timeout
+
+    ghostPluginArgs = parseAgentArgs(options.ghostPluginArgs)
+    args['ghostPacmanConfig'] = GhostPacmanConfig(**ghostPluginArgs)
 
     # Special case: recorded games don't use the runGames method or args structure
     if options.gameToReplay != None:

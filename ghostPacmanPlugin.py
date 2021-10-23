@@ -14,7 +14,7 @@ class GhostPacmanAgent(Agent):
         return actions[rnd]
 
     def copy( self, index = 0 ):
-        return RandomAgent(index)
+        return GhostPacmanAgent(index)
 
 GHOST_PACMAN_COLORS = [
     #outline

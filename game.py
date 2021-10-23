@@ -714,7 +714,7 @@ class Game:
 
             pluginResult = ghostPacmanPlugin.move(agentIndex)
             numAgents += pluginResult
-            agentIndex += pluginResult
+            agentIndex += pluginResult if pluginResult == -1 else 0
 
             # Allow for game specific conditions (winning, losing, etc.)
             self.rules.process(self.state, self)

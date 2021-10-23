@@ -1,5 +1,5 @@
 from random import randrange
-from random import uniform
+import random
 from Game import Agent
 from graphicsUtils import *
 from pacman import GhostRules
@@ -50,7 +50,7 @@ def GhostPacmanConfig( args = None ):
 class _GhostPacmanConfig():
     _instance = None
 
-    def __init__( self, enabled = False,  numFoods = 3, startingFoods = 0, probability = 1, maxSteps = 15, killGhosts = False, ghostPacmanAgent = GhostPacmanAgent, ghostPacmanColors = GHOST_PACMAN_COLORS, deadPacmanColors = DEAD_PACMAN_COLORS ):
+    def __init__( self, enabled = True,  numFoods = 3, startingFoods = 0, probability = 1.0 / 3.0, maxSteps = 15, killGhosts = False, ghostPacmanAgent = GhostPacmanAgent, ghostPacmanColors = GHOST_PACMAN_COLORS, deadPacmanColors = DEAD_PACMAN_COLORS ):
         self.enabled = isTrue(enabled)
         self.numFoods = int(numFoods)
         self.startingFoods = int(startingFoods)
@@ -113,8 +113,8 @@ class _GhostPacmanConfig():
 
         self._eatenFoods += self._game.state.data._foodEaten is not None
         if self._eatenFoods >= self.numFoods:
-            rnd = uniform(0, 1)
-            if rnd <= self.probability:
+            rnd = random.random()
+            if rnd < self.probability:
                 self.spawnGhostPacman()
                 spawned = True
 
